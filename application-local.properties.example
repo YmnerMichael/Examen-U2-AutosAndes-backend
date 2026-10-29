@@ -1,0 +1,8 @@
+# Copiar como application-local.properties y editar localmente.
+spring.datasource.url=jdbc:oracle:thin:@//localhost:1522/FREEPDB1
+# Con el script de esquema y la misma contraseña del usuario PHARMADB:
+spring.datasource.username=PHARMADB[AUTOANDES]
+spring.datasource.password=COLOCA_TU_PASSWORD
+spring.jpa.properties.hibernate.default_schema=AUTOANDES
+spring.flyway.default-schema=AUTOANDES
+spring.flyway.schemas=AUTOANDES
