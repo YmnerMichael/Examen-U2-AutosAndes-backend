@@ -1,7 +1,1 @@
-Verificación local — 29/10/2026
-Backend: compilación correcta con Java 21 y Spring Boot 4.0.7.
-Pruebas de integración: 4 ejecutadas, 0 fallos, 0 errores.
-Incluyen CRUD, validación, permisos 401/403, BCrypt, rollback por tercer detalle inactivo, kilometraje, total del servidor, filtros, anulación y reporte.
-Base de pruebas: H2 en modo Oracle; no reemplaza la comprobación final en Oracle.
-Angular 22: build de desarrollo y producción correctos antes del cambio de nombre.
-Pendientes: credenciales/esquema Oracle, publicación remota e informe con capturas finales.
+6 pruebas aprobadas en H2, sin fallos ni errores. Login verificado con contraseñas individuales usuario+2026 y rechazo de cuenta inactiva. V4 actualiza los hashes BCrypt de las cuatro cuentas en ambas cadenas de migración. Reiniciar el backend para aplicarla en Oracle.

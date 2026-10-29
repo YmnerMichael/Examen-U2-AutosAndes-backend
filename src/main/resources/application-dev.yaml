@@ -1,0 +1,63 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:oracle:thin:@//localhost:1522/FREEPDB1}
+    username: AUTOANDESDB
+    password: 1234567
+    driver-class-name: oracle.jdbc.OracleDriver
+  jpa:
+    hibernate:
+      # El esquema lo crea Flyway (db); Hibernate solo valida
+      # que las entidades coincidan con lo que hay en la base.
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        default_schema: ${DB_SCHEMA:${spring.datasource.username}}
+        jdbc:
+          time_zone: America/Lima
+          fetch_size: 50
+        format_sql: true
+  flyway:
+    enabled: true
+    default-schema: ${DB_SCHEMA:${spring.datasource.username}}
+    schemas: ${DB_SCHEMA:${spring.datasource.username}}
+    create-schemas: false
+    # Migración común del examen y recursos adicionales de desarrollo.
+    # Sin baseline: si el esquema de desarrollo tiene tablas viejas
+    # (creadas antes con ddl-auto=update) hay que limpiarlo una vez
+    # No se incluye ningún script de borrado del esquema.
+    locations: classpath:db,classpath:db-dev
+    baseline-on-migrate: false
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    enabled: true
+
+# Trazabilidad en desarrollo: se quiere ver el detalle de las
+# consultas y de los parámetros que llegan a cada servicio.
+logging:
+  level:
+    root: INFO
+    pe.edu.upeu.autoandes: DEBUG
+    pe.edu.upeu.autoandes.service.impl: DEBUG
+    org.hibernate.SQL: DEBUG
+    # No registrar contraseñas ni hashes enviados como parámetros SQL.
+    org.hibernate.orm.jdbc.bind: "OFF"
+    org.springframework.web: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
+
+# Orígenes del frontend autorizados a consumir /api/** en desarrollo.
+# Se declaran uno por uno: nunca el comodín "*".
+app:
+  cors:
+    allowed-origins: http://localhost:5173,http://127.0.0.1:5173,http://localhost:4200
+  # Clave HMAC del JWT en Base64 (mínimo 256 bits). Solo para desarrollo.
+  jwt:
+    secret: YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXphYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5eg==
+    expiracion-minutos: 60

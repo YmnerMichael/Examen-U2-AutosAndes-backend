@@ -10,9 +10,10 @@ import java.net.URI;
 import com.fasterxml.jackson.databind.*;
 
 /** Full MVC, security filters and real persistence; H2 is exclusively a test database. */
-@SpringBootTest
+@SpringBootTest(properties="spring.profiles.active=test")
 @org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 @ActiveProfiles("test")
+@org.springframework.test.context.ContextConfiguration(initializers=H2MigrationInitializer.class)
 @org.springframework.test.context.TestExecutionListeners(
     listeners=org.springframework.test.context.support.DependencyInjectionTestExecutionListener.class,
     inheritListeners=false)
@@ -31,20 +32,28 @@ class AutoAndesIntegrationTest {
         return new Response(response.getStatus(),response.getContentAsString(java.nio.charset.StandardCharsets.UTF_8));
     }
     String login(String username) throws Exception {
-        var res=call("POST","/auth/login",null,"{\"username\":\""+username+"\",\"password\":\"Auto2026*\"}");
-        assertEquals(200,res.statusCode(),res.body());return json.readTree(res.body()).get("token").asText();
+        var res=call("POST","/auth/login",null,"{\"username\":\""+username+"\",\"password\":\""+username.toLowerCase(java.util.Locale.ROOT)+"2026\"}");
+        assertEquals(200,res.statusCode(),res.body());
+        assertEquals(3600,json.readTree(res.body()).get("expiraEnSegundos").asLong());
+        return json.readTree(res.body()).get("token").asText();
     }
     @Test @Order(1) void authenticationAndPermissions() throws Exception {
         assertEquals(401,call("GET","/servicios",null,null).statusCode());
-        String asesor=login("asesor"),jefe=login("jefe");login("admin");
+        String asesor=login("asesor"),jefe=login("jefe");login("admin");login("AsEsOr");
         assertEquals(403,call("GET","/reportes/ingresos-por-servicio",asesor,null).statusCode());
         assertEquals(403,call("PATCH","/ordenes/1/anular",asesor,"{\"motivo\":\"Solicitud del cliente\"}").statusCode());
         assertEquals(403,call("POST","/ordenes",jefe,"{\"vehiculoId\":1,\"kilometraje\":46000,\"detalles\":[{\"servicioId\":1,\"cantidad\":1}]}").statusCode());
         assertEquals(401,call("GET","/servicios",asesor+"alterado",null).statusCode());
-        var inactive=call("POST","/auth/login",null,"{\"username\":\"inactivo\",\"password\":\"Auto2026*\"}");
-        var unknown=call("POST","/auth/login",null,"{\"username\":\"nadie\",\"password\":\"Auto2026*\"}");
+        var inactive=call("POST","/auth/login",null,"{\"username\":\"inactivo\",\"password\":\"inactivo2026\"}");
+        var unknown=call("POST","/auth/login",null,"{\"username\":\"nadie\",\"password\":\"nadie2026\"}");
         assertEquals(401,inactive.statusCode());assertEquals(json.readTree(inactive.body()).get("mensaje"),json.readTree(unknown.body()).get("mensaje"));
         assertTrue(db.queryForObject("select password from AUTOANDES.usuarios where username='admin'",String.class).startsWith("$2"));
+        assertEquals(5,db.queryForObject("select count(*) from AUTOANDES.empleados",Integer.class));
+        assertEquals(4,db.queryForObject("select count(*) from AUTOANDES.usuarios where empleado_id is not null",Integer.class));
+        assertEquals(4,db.queryForObject("select count(*) from AUTOANDES.\"flyway_schema_history\" where \"success\"=true and \"version\" is not null",Integer.class));
+        var me=json.readTree(call("GET","/auth/me",asesor,null).body());
+        assertEquals("Lucia Fernandez Quispe",me.get("nombreCompleto").asText());
+        assertFalse(me.has("password"));
     }
     @Test @Order(2) void catalogAndValidationContract() throws Exception {
         String admin=login("admin");
@@ -84,5 +93,22 @@ class AutoAndesIntegrationTest {
         double total=0;for(var r:after)total+=r.get("importeTotal").asDouble();assertEquals(150,total);
         db.update("update AUTOANDES.orden_servicio set fecha=TIMESTAMP '2020-01-01 10:00:00' where id=2");
         assertEquals(409,call("PATCH","/ordenes/2/anular",jefe,"{\"motivo\":\"Solicitud de cancelación del cliente\"}").statusCode());
+    }
+    @Test @Order(5) void yamlOptionsControlCorsJwtDurationAndIntegerParsing() throws Exception {
+        var allowed=mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options("/api/v1/servicios")
+            .header("Origin","http://localhost:4200").header("Access-Control-Request-Method","GET")
+            .header("Access-Control-Request-Headers","Authorization")).andReturn().getResponse();
+        assertEquals(200,allowed.getStatus());
+        assertEquals("http://localhost:4200",allowed.getHeader("Access-Control-Allow-Origin"));
+        var denied=mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options("/api/v1/servicios")
+            .header("Origin","https://otro.example").header("Access-Control-Request-Method","GET")).andReturn().getResponse();
+        assertEquals(403,denied.getStatus());
+        assertEquals(400,call("POST","/ordenes",login("asesor"),"{\"vehiculoId\":1,\"kilometraje\":49000,\"detalles\":[{\"servicioId\":1,\"cantidad\":1.5}]}").statusCode());
+        String secret=java.util.Base64.getEncoder().encodeToString("ClaveDePruebaBase64ConMasDeTreintaYDosBytes2026".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        var service=new pe.edu.upeu.autoandes.config.JwtService(secret,30);
+        var claims=io.jsonwebtoken.Jwts.parser().verifyWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor(io.jsonwebtoken.io.Decoders.BASE64.decode(secret))).build()
+            .parseSignedClaims(service.crear("asesor",java.util.Set.of("ASESOR"),java.util.Set.of("ORDEN_LEER"))).getPayload();
+        assertEquals(1800,service.expiraEnSegundos());
+        assertEquals(1800,(claims.getExpiration().getTime()-claims.getIssuedAt().getTime())/1000);
     }
 }

@@ -35,7 +35,7 @@
         "url": "{{baseUrl}}/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\"username\": \"admin\", \"password\": \"Auto2026*\"}",
+          "raw": "{\"username\": \"admin\", \"password\": \"admin2026\"}",
           "options": {
             "raw": {
               "language": "json"
@@ -69,7 +69,7 @@
         "url": "{{baseUrl}}/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\"username\": \"asesor\", \"password\": \"Auto2026*\"}",
+          "raw": "{\"username\": \"asesor\", \"password\": \"asesor2026\"}",
           "options": {
             "raw": {
               "language": "json"
@@ -103,7 +103,7 @@
         "url": "{{baseUrl}}/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\"username\": \"jefe\", \"password\": \"Auto2026*\"}",
+          "raw": "{\"username\": \"jefe\", \"password\": \"jefe2026\"}",
           "options": {
             "raw": {
               "language": "json"

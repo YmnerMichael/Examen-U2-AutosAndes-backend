@@ -1,7 +1,7 @@
--- Ejecutar UNA VEZ con SYS o SYSTEM en FREEPDB1. No elimina datos de PHARMADB.
--- Conserva la conexión PHARMADB del proyecto original, y aísla AutoAndes en su esquema.
-CREATE USER AUTOANDES NO AUTHENTICATION DEFAULT TABLESPACE USERS QUOTA UNLIMITED ON USERS;
+-- Ejecutar UNA VEZ con SYS o SYSTEM conectado a FREEPDB1.
+-- SQL Developer solicitará una contraseña para el nuevo usuario.
+-- Usa la misma en application-dev.yaml o en DB_PASSWORD.
+-- No elimina ni modifica tablas de PHARMADB ni PROYECTO_MANA.
+CREATE USER AUTOANDES IDENTIFIED BY "&autoandes_password"
+    DEFAULT TABLESPACE USERS QUOTA UNLIMITED ON USERS;
 GRANT CREATE SESSION, CREATE TABLE, CREATE SEQUENCE TO AUTOANDES;
-ALTER USER AUTOANDES GRANT CONNECT THROUGH PHARMADB;
--- JDBC usa PHARMADB[AUTOANDES] con la misma contraseña local de PHARMADB.
--- No concede permisos ANY ni modifica las tablas existentes de PHARMADB.

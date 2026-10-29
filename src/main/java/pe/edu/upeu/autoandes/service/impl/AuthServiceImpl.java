@@ -11,8 +11,8 @@ public class AuthServiceImpl implements pe.edu.upeu.autoandes.service.service.Au
 private final UsuarioRepository usuarios;private final PasswordEncoder encoder;private final JwtService jwt;
 private final String dummy=new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("dummy");
 public LoginResponseDTO login(LoginRequestDTO r) {
-var u=usuarios.findByUsername(r.username()).orElse(null);boolean coincide=encoder.matches(r.password(),u==null?dummy:u.getPassword());
+var u=usuarios.findByUsernameIgnoreCase(r.username()).orElse(null);boolean coincide=encoder.matches(r.password(),u==null?dummy:u.getPassword());
 if(u==null||!coincide||!Boolean.TRUE.equals(u.getActivo())) throw new DominioException(401,"Credenciales inválidas");
-var me=actual(u.getUsername());return new LoginResponseDTO(jwt.crear(me.username(),me.roles(),me.permisos()),"Bearer",3600,me.nombreCompleto(),me.roles(),me.permisos()); }
-public UsuarioResponseDTO actual(String username) { var u=usuarios.findByUsername(username).orElseThrow(()->new DominioException(401,"Credenciales inválidas"));var roles=u.getRoles().stream().map(r->r.getNombre()).collect(java.util.stream.Collectors.toSet());return new UsuarioResponseDTO(u.getUsername(),u.getNombreCompleto(),roles,PermisosPorRol.permisos(roles)); }
+var me=actual(u.getUsername());return new LoginResponseDTO(jwt.crear(me.username(),me.roles(),me.permisos()),"Bearer",jwt.expiraEnSegundos(),me.nombreCompleto(),me.roles(),me.permisos()); }
+public UsuarioResponseDTO actual(String username) { var u=usuarios.findByUsernameIgnoreCase(username).orElseThrow(()->new DominioException(401,"Credenciales inválidas"));var roles=u.getRoles().stream().map(r->r.getNombre()).collect(java.util.stream.Collectors.toSet());return new UsuarioResponseDTO(u.getUsername(),u.getNombreCompleto(),roles,PermisosPorRol.permisos(roles)); }
 }

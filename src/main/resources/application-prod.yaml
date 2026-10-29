@@ -1,0 +1,58 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: oracle.jdbc.OracleDriver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        default_schema: ${DB_SCHEMA:AUTOANDES}
+        jdbc:
+          time_zone: America/Lima
+          fetch_size: 50
+        format_sql: false
+  # En producción el esquema se crea y evoluciona únicamente con las
+  # migraciones versionadas de db; nunca se hace baseline.
+  flyway:
+    enabled: true
+    default-schema: ${DB_SCHEMA:AUTOANDES}
+    schemas: ${DB_SCHEMA:AUTOANDES}
+    create-schemas: false
+    locations: classpath:db
+    baseline-on-migrate: false
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+# En producción solo se conserva la traza funcional de los servicios
+# (parámetros, filas y duración); el SQL y el detalle web se apagan.
+logging:
+  level:
+    root: WARN
+    pe.edu.upeu.autoandes: INFO
+    pe.edu.upeu.autoandes.service.impl: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN
+    org.springframework.web: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
+
+# En producción el origen del frontend llega por variable de entorno,
+# también de forma explícita y sin comodín.
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGINS:http://localhost:4200}
+  # En producción la clave llega por variable de entorno, nunca en el repo.
+  jwt:
+    secret: ${JWT_SECRET}
+    expiracion-minutos: ${JWT_EXPIRACION_MINUTOS:60}

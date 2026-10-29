@@ -1,0 +1,16 @@
+server:
+  port: 8080
+
+spring:
+  jackson:
+    deserialization:
+      accept-float-as-int: false
+  jpa:
+    open-in-view: false
+  application:
+    name: backendAutoAndes
+  profiles:
+    active: dev
+# Opciones propias del contrato de AutoAndes.
+app:
+  zone: America/Lima
